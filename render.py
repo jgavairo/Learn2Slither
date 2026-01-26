@@ -9,6 +9,7 @@ FOOD_GREEN_COLOR = (90, 200, 90)
 FOOD_RED_COLOR = (220, 70, 70)
 
 
+
 def ensure_screen(size: int, cell_size: int = 32):
     """Create a pygame display surface sized to the board."""
     width = size * cell_size

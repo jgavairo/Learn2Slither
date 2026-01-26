@@ -90,6 +90,7 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     screen = ensure_screen(board_size, cell_size)
     clock = pygame.time.Clock()
     running = True
+    first_render = True
 
     print("Pygame mode: arrows or WASD to steer, ESC to quit")
 
@@ -113,10 +114,13 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
             game_board.update()
         else:
             running = False
-
         render(game_board, screen, cell_size=cell_size)
+        if first_render:
+            time.sleep(1.5)  # Pause before first render
+        first_render = False
         clock.tick(fps)
 
+    print("Final Score:", game_board.get_score())  # Placeholder for actual score
     pygame.quit()
 
 
@@ -127,5 +131,5 @@ if __name__ == "__main__":
 
     if USE_PYGAME:
         run_pygame(board_size=BOARD_SIZE, cell_size=32, fps=8)
-    else:
-        run_terminal(board_size=BOARD_SIZE)
+    # else:
+    #     run_terminal(board_size=BOARD_SIZE)

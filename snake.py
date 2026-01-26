@@ -60,8 +60,10 @@ class Snake:
             'LEFT': (-1, 0),
             'RIGHT': (1, 0)
         }
+        current_direction = getattr(self, '_direction', None)
         if direction in directions:
-            self._direction = directions[direction]
+            if current_direction is None or (current_direction != (-directions[direction][0], -directions[direction][1])):
+                self._direction = directions[direction]
         else:
             raise ValueError("Invalid direction. Use 'UP', 'DOWN', 'LEFT', or 'RIGHT'.")
         
@@ -136,4 +138,10 @@ class Snake:
                 self._body.pop()  # Remove tail segment
             else:
                 self.die()
+
+    # def share_vision(self) -> list[tuple]:
+    #     """
+    #     Share the snake's body positions for vision purposes.
+    #     """
+    #     return self._body.copy()
 
