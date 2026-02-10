@@ -184,6 +184,54 @@ class Board:
         if (not self.is_valid_position(position) or position in self._snake.get_body()):
             self._gameOver = True
             return True
+
+    def _symbol_at(self, position: tuple) -> str:
+        """
+        Return the symbol at a given position for snake vision.
+        """
+        if not self.is_valid_position(position):
+            return "W"
+
+        head = self._snake.get_body()[0]
+        if position == head:
+            return "H"
+
+        if position in self._snake.get_body()[1:]:
+            return "S"
+
+        for food_item in self._food:
+            if food_item.get_position() == position:
+                return "G" if food_item.get_color() == "GREEN" else "R"
+
+        return "0"
+
+    def get_snake_vision(self) -> dict[str, list[str]]:
+        """
+        Return the snake vision in 4 directions from its head up to the wall.
+        Each direction includes the head symbol as the first element.
+        """
+        head_x, head_y = self._snake.get_body()[0]
+        directions = {
+            "UP": (0, -1),
+            "LEFT": (-1, 0),
+            "DOWN": (0, 1),
+            "RIGHT": (1, 0),
+        }
+
+        vision = {}
+        for name, (dx, dy) in directions.items():
+            line = ["H"]
+            x, y = head_x, head_y
+            while True:
+                x += dx
+                y += dy
+                if not self.is_valid_position((x, y)):
+                    line.append("W")
+                    break
+                line.append(self._symbol_at((x, y)))
+            vision[name] = line
+
+        return vision
     
     def update(self):
         """
@@ -210,6 +258,7 @@ class Board:
                 self.add_food(food_item.get_color())
                 break
         if self._snake.is_alive():
+            print(self.get_snake_vision())
             self._snake.move(next_position)
         else:
             self._gameOver = True
