@@ -26,7 +26,6 @@ def get_state_tuple(vision_dict):
 def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     if pygame is None:
         print("Pygame is not installed; falling back to terminal mode.")
-        # run_terminal(board_size)
         return
 
     pygame.init()
@@ -55,20 +54,12 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     game_board.get_snake().set_direction('RIGHT')
         print (f"Step 1: sending state to agent...\n\n")
-        state = get_state_tuple(game_board.get_snake_vision())
+        old_state = get_state_tuple(game_board.get_snake_vision())
 
         print (f"Step 2: receiving action from agent...\n")
-        action = game_agent.choose_action(state)
-
-        match action:
-            case 0:
-                game_board.get_snake().set_direction('UP')
-            case 1:
-                game_board.get_snake().set_direction('DOWN')
-            case 2:
-                game_board.get_snake().set_direction('LEFT')
-            case 3:
-                game_board.get_snake().set_direction('RIGHT')
+        action = game_agent.choose_action(old_state)
+        directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+        game_board.get_snake().set_direction(directions[action])
 
         if first_render:
             render(game_board, screen, cell_size=cell_size)
@@ -79,8 +70,13 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
 
         if not game_board.is_gameOver():
             reward = game_board.update()
+            done = game_board.is_gameOver()
+            new_state = get_state_tuple(game_board.get_snake_vision())
+            print (f"Step 3: sending reward and new state to agent...\n")
+            game_agent.learn(old_state, action, reward, new_state, done)
         else:
-            running = False
+            
+            game_board.reset()
         render(game_board, screen, cell_size=cell_size)
         clock.tick(fps)
 
@@ -89,11 +85,8 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
 
 
 if __name__ == "__main__":
-    # Toggle here: True for Pygame, False for terminal ASCII
     USE_PYGAME = True
     BOARD_SIZE = 10
 
     if USE_PYGAME:
         run_pygame(board_size=BOARD_SIZE, cell_size=32, fps=8)
-    # else:
-    #     run_terminal(board_size=BOARD_SIZE)

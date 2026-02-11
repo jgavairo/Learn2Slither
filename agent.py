@@ -36,6 +36,31 @@ class Agent :
             q_values = self.get_q_values(state)
             return np.argmax(q_values)
         
-    
-    
+
+    def learn(self, old_state, action, reward, new_state, done):
+        """
+        Update Q-values based on the action taken and reward received.
+        """
+        q_values = self.get_q_values(old_state)
+        old_q_value = q_values[action]
+
+        if done:
+            max_future_q = 0
+        else:
+            # On demande à la Q-Table le meilleur score de l'état suivant
+            next_q_values = self.get_q_values(new_state)
+            max_future_q = max(next_q_values)
+        
+        # 3. La formule magique (Bellman)
+        # On calcule la nouvelle estimation : Reward actuel + 90% du futur
+        new_q_value = old_q_value + self.lr * (reward + self.gamma * max_future_q - old_q_value)
+        
+        # 4. On enregistre cette nouvelle valeur dans notre mémoire
+        self.q_table[old_state][action] = new_q_value
+
+        # 5. Si la partie est finie, on réduit un peu le hasard (Epsilon Decay)
+        if done:
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
+
     
