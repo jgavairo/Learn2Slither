@@ -11,6 +11,7 @@ except ImportError:  # pragma: no cover - runtime fallback
 from board import Board
 from utils_display import print_board_colored, print_board_basic
 from render import ensure_screen, render
+from agent import Agent
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -24,6 +25,7 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
 
     pygame.init()
     game_board = Board(size=board_size)
+    game_agent = Agent()
     screen = ensure_screen(board_size, cell_size)
     clock = pygame.time.Clock()
     running = True
@@ -46,10 +48,24 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                     game_board.get_snake().set_direction('LEFT')
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     game_board.get_snake().set_direction('RIGHT')
-        print (game_board.get_snake_vision())
+        print (f"Step 1: sending state to agent\n\n")
+
+        print (f"Step 2: receiving action from agent\n")
+        action = game_agent.choose_action(game_board.get_snake_vision())
+
+        match action:
+            case 0:
+                game_board.get_snake().set_direction('UP')
+            case 1:
+                game_board.get_snake().set_direction('DOWN')
+            case 2:
+                game_board.get_snake().set_direction('LEFT')
+            case 3:
+                game_board.get_snake().set_direction('RIGHT')
+                
         if first_render:
             render(game_board, screen, cell_size=cell_size)
-            time.sleep(20.5)  # Pause before first render
+            time.sleep(1.5)  # Pause before first render
             first_render = False
             clock.tick(fps)
             continue
