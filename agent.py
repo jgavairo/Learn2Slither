@@ -1,5 +1,5 @@
 import random
-
+import numpy as np
 
 class Agent :
     q_table : dict[tuple[int, ...], list[float]]
@@ -28,8 +28,14 @@ class Agent :
         """
         Choose an action based on epsilon-greedy strategy.
         """
-        print (f"[AGENT] Choosing action for state:\n{state}\n\n")
-        return random.choice(self.actions)
-
-
+        print (f"[AGENT] Choosing action for state:\n{state}\nEpsilon: {self.epsilon:.4f}")
+        if random.random() < self.epsilon:
+            print (f"[AGENT] Exploring: choosing random action")
+            return random.choice(self.actions)
+        else:
+            q_values = self.get_q_values(state)
+            return np.argmax(q_values)
+        
+    
+    
     

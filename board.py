@@ -269,21 +269,26 @@ class Board:
         """
         Update the board state.
         """
+        reward = 0
+
         if self._gameOver:
             return
         
         next_position = self._snake.get_next_head()
 
         if self.verify_collision(next_position):
-            return
+            reward = -100
+            return reward
         
         for food_item in self._food:
             if food_item.get_position() == next_position:
                 item_color = food_item.get_color()
                 self._snake.eat(item_color)
                 if item_color == "GREEN":
+                    reward = 10
                     self.increase_score(10)
                 elif item_color == "RED":
+                    reward = -15
                     self.decrease_score(10)
 
                 self.remove_food_at_position(next_position)
@@ -293,3 +298,6 @@ class Board:
             self._snake.move(next_position)
         else:
             self._gameOver = True
+        if reward == 0:
+            reward = -0.1
+        return reward

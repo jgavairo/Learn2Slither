@@ -16,6 +16,12 @@ from agent import Agent
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def get_state_tuple(vision_dict):
+    res = []
+    # On force l'ordre pour que l'IA ne soit pas perdue
+    for direction in ["UP", "DOWN", "LEFT", "RIGHT"]:
+        res.extend(vision_dict[direction])
+    return tuple(res)
 
 def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     if pygame is None:
@@ -48,10 +54,11 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                     game_board.get_snake().set_direction('LEFT')
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     game_board.get_snake().set_direction('RIGHT')
-        print (f"Step 1: sending state to agent\n\n")
+        print (f"Step 1: sending state to agent...\n\n")
+        state = get_state_tuple(game_board.get_snake_vision())
 
-        print (f"Step 2: receiving action from agent\n")
-        action = game_agent.choose_action(game_board.get_snake_vision())
+        print (f"Step 2: receiving action from agent...\n")
+        action = game_agent.choose_action(state)
 
         match action:
             case 0:
@@ -62,16 +69,16 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                 game_board.get_snake().set_direction('LEFT')
             case 3:
                 game_board.get_snake().set_direction('RIGHT')
-                
+
         if first_render:
             render(game_board, screen, cell_size=cell_size)
-            time.sleep(1.5)  # Pause before first render
+            time.sleep(1.5)
             first_render = False
             clock.tick(fps)
             continue
 
         if not game_board.is_gameOver():
-            game_board.update()
+            reward = game_board.update()
         else:
             running = False
         render(game_board, screen, cell_size=cell_size)
