@@ -2,7 +2,7 @@ import random
 
 
 class Agent :
-    q_table : dict[str, list[float]]
+    q_table : dict[tuple[int, ...], list[float]]
     actions : list[int] 
 
     def __init__(self) -> None:
@@ -15,6 +15,14 @@ class Agent :
         self.epsilon = 1.0   # Taux d'exploration (100% au début)
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995 # Diminue le hasard à chaque partie
+
+    def get_q_values(self, state: str) -> list[float]:
+        """
+        Get Q-values for a given state, initializing if not present.
+        """
+        if state not in self.q_table:
+            self.q_table[state] = [0.0 for _ in self.actions]
+        return self.q_table[state]
 
     def choose_action(self, state):
         """
