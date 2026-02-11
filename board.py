@@ -205,11 +205,31 @@ class Board:
 
         return "0"
 
-    def get_snake_vision(self) -> dict[str, list[str]]:
+    @staticmethod
+    def simplify_distance(distance: int) -> int:
+        """
+        Simplify the distance value for snake vision.
+        0: No object
+        1: Object is 1 step away
+        2: Object is beetween 2 and 5 steps away
+        3: Object is 6 or more steps away
+        """
+        match distance:
+            case 0:
+                return 0
+            case 1:
+                return 1
+            case 2 | 3 | 4 | 5:
+                return 2
+            case _:
+                return 3
+
+    def get_snake_vision(self) -> dict[str, list[int]]:
         """
         Return the snake vision in 4 directions from its head up to the wall.
         Each direction includes the head symbol as the first element.
         """
+        print (self._snake.get_body()[0])
         head_x, head_y = self._snake.get_body()[0]
         directions = {
             "UP": (0, -1),
@@ -218,18 +238,30 @@ class Board:
             "RIGHT": (1, 0),
         }
 
-        vision = {}
+        vision: dict[str, list[int]] = {}
         for name, (dx, dy) in directions.items():
-            line = ["H"]
+            wall_distance : int = 0
+            green_apple_distance : int = 0
+            red_apple_distance : int = 0
+            steps : int = 0
+
             x, y = head_x, head_y
+
             while True:
+
                 x += dx
                 y += dy
-                if not self.is_valid_position((x, y)):
-                    line.append("W")
+                steps += 1
+
+                if not self.is_valid_position((x, y)) or (x, y) in self._snake.get_body():
+                    wall_distance = steps
                     break
-                line.append(self._symbol_at((x, y)))
-            vision[name] = line
+                symbol = self._symbol_at((x, y))
+                if symbol == "G" and green_apple_distance == 0:
+                    green_apple_distance = steps
+                if symbol == "R" and red_apple_distance == 0:
+                    red_apple_distance = steps
+            vision[name] = [self.simplify_distance(wall_distance), self.simplify_distance(green_apple_distance), self.simplify_distance(red_apple_distance)]
 
         return vision
     
@@ -258,7 +290,6 @@ class Board:
                 self.add_food(food_item.get_color())
                 break
         if self._snake.is_alive():
-            print(self.get_snake_vision())
             self._snake.move(next_position)
         else:
             self._gameOver = True

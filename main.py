@@ -109,15 +109,19 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                     game_board.get_snake().set_direction('LEFT')
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     game_board.get_snake().set_direction('RIGHT')
+        print (game_board.get_snake_vision())
+        if first_render:
+            render(game_board, screen, cell_size=cell_size)
+            time.sleep(20.5)  # Pause before first render
+            first_render = False
+            clock.tick(fps)
+            continue
 
         if not game_board.is_gameOver():
             game_board.update()
         else:
             running = False
         render(game_board, screen, cell_size=cell_size)
-        if first_render:
-            time.sleep(1.5)  # Pause before first render
-        first_render = False
         clock.tick(fps)
 
     print("Final Score:", game_board.get_score())  # Placeholder for actual score
@@ -127,7 +131,7 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
 if __name__ == "__main__":
     # Toggle here: True for Pygame, False for terminal ASCII
     USE_PYGAME = True
-    BOARD_SIZE = 15
+    BOARD_SIZE = 10
 
     if USE_PYGAME:
         run_pygame(board_size=BOARD_SIZE, cell_size=32, fps=8)
