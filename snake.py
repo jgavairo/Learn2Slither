@@ -41,6 +41,8 @@ class Snake:
         """
         Initialize the snake with a starting position and direction.
         """
+        # Ensure _direction exists before calling setter to avoid AttributeError
+        self._direction = None
         self.set_direction(direction)
         self.set_position(start_position)  # body is a list of tuples
         self._growing = False
@@ -62,8 +64,12 @@ class Snake:
         }
         current_direction = getattr(self, '_direction', None)
         if direction in directions:
-            if current_direction is None or (current_direction != (-directions[direction][0], -directions[direction][1])):
-                self._direction = directions[direction]
+            # If current direction is not set yet, allow any initial direction.
+            if self._direction is not None:
+                if (directions[direction][0] == -self._direction[0] and
+                    directions[direction][1] == -self._direction[1]):
+                    return
+            self._direction = directions[direction]
         else:
             raise ValueError("Invalid direction. Use 'UP', 'DOWN', 'LEFT', or 'RIGHT'.")
         

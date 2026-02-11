@@ -15,69 +15,6 @@ from render import ensure_screen, render
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-# def get_input_non_blocking():
-#     # Windows specific non-blocking input
-#     if msvcrt.kbhit():
-#         key = msvcrt.getch()
-#         try:
-#             char = key.decode('utf-8').lower()
-#             return char
-#         except:
-#             return None
-#     return None
-
-# def run_terminal(board_size: int = 10):
-#     game_board = Board(size=board_size)
-#     print(f"Initialized game board of size {board_size}x{board_size}.")
-
-#     last_move_time = time.time()
-#     move_delay = 1.0  # 1 second between each move
-
-#     print("Initial State (basic):")
-#     print_board_basic(game_board)
-#     print("Initial State (colored):")
-#     print_board_colored(game_board)
-#     print("Controls: W (Up), A (Left), S (Down), D (Right) or CTRL+C to quit")
-
-#     try:
-#         while not game_board.is_gameOver():
-#             current_time = time.time()
-
-#             # 1. Input Handling (Non-blocking)
-#             key = get_input_non_blocking()
-#             if key:
-#                 direction = None
-#                 if key == 'w':
-#                     direction = 'UP'
-#                 elif key == 's':
-#                     direction = 'DOWN'
-#                 elif key == 'a':
-#                     direction = 'LEFT'
-#                 elif key == 'd':
-#                     direction = 'RIGHT'
-
-#                 if direction:
-#                     try:
-#                         game_board.get_snake().set_direction(direction)
-#                         print(f"Direction changed to {direction}")
-#                     except ValueError:
-#                         pass  # Ignore invalid directions (like 180 turn)
-
-#             # 2. Game Logic (Every 1 second)
-#             if current_time - last_move_time > move_delay:
-#                 os.system('cls' if os.name == 'nt' else 'clear')  # Clear for smooth animation
-#                 game_board.update()
-#                 print_board_colored(game_board)
-#                 last_move_time = current_time
-
-#             # Small pause to avoid CPU overload
-#             time.sleep(0.01)
-
-#     except KeyboardInterrupt:
-#         print("\nGame stopped by user.")
-
-#     print("GAME OVER")
-
 
 def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     if pygame is None:
