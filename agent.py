@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pickle
 
 class Agent :
     q_table : dict[tuple[int, ...], list[float]]
@@ -62,5 +63,22 @@ class Agent :
         if done:
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
+        
+    def save_q_table(self, filename: str):
+        """
+        Function to save the q_table to a file
+        """
+        with open (filename, 'wb') as f:
+            pickle.dump(self.q_table, f)
+        print (f"[AGENT] Q-table saved to {filename}")
 
+    def load_q_table(self, filename: str):
+        """ Function to load the q_table from a file """ 
+        try:
+            with open(filename, 'rb') as f:
+                self.q_table = pickle.load(f)
+            print(f"Q_table {filename} loaded!")
+        except FileNotFoundError:
+            print(f"{filename} not found. Starting with an empty Q-table.")
+            
     

@@ -25,7 +25,7 @@ def get_state_tuple(vision_dict):
 
 def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     if pygame is None:
-        print("Pygame is not installed; falling back to terminal mode.")
+        # print("Pygame is not installed; falling back to terminal mode.")
         return
 
     pygame.init()
@@ -35,8 +35,10 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
     clock = pygame.time.Clock()
     running = True
     first_render = True
+    counter_games = 0
+    training_sessions = 0
 
-    print("Pygame mode: arrows or WASD to steer, ESC to quit")
+    # print("Pygame mode: arrows or WASD to steer, ESC to quit")
 
     while running:
         for event in pygame.event.get():
@@ -53,10 +55,10 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
                     game_board.get_snake().set_direction('LEFT')
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     game_board.get_snake().set_direction('RIGHT')
-        print (f"Step 1: sending state to agent...\n\n")
+        # print (f"Step 1: sending state to agent...\n\n")
         old_state = get_state_tuple(game_board.get_snake_vision())
 
-        print (f"Step 2: receiving action from agent...\n")
+        # print (f"Step 2: receiving action from agent...\n")
         action = game_agent.choose_action(old_state)
         directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
         game_board.get_snake().set_direction(directions[action])
@@ -72,10 +74,14 @@ def run_pygame(board_size: int = 10, cell_size: int = 32, fps: int = 8):
             reward = game_board.update()
             done = game_board.is_gameOver()
             new_state = get_state_tuple(game_board.get_snake_vision())
-            print (f"Step 3: sending reward and new state to agent...\n")
             game_agent.learn(old_state, action, reward, new_state, done)
         else:
-            
+            counter_games+= 1
+            if counter_games == 1:
+                training_sessions += 1
+                counter_games = 0
+                if training_sessions == 1 or training_sessions == 10 or training_sessions == 100:
+                    game_agent.save_q_table(f"q_table{training_sessions}.pkl")
             game_board.reset()
         render(game_board, screen, cell_size=cell_size)
         clock.tick(fps)

@@ -299,5 +299,5 @@ class Board:
         else:
             self._gameOver = True
         if reward == 0:
-            reward = -0.1
+            reward = -1
         return reward
