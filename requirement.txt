@@ -1,6 +1,9 @@
 flake8==7.3.0
 mccabe==0.7.0
 numpy==2.2.6
+prompt_toolkit==3.0.52
 pycodestyle==2.14.0
 pyflakes==3.4.0
 pygame==2.6.1
+questionary==2.1.1
+wcwidth==0.6.0
