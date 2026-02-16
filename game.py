@@ -35,6 +35,17 @@ def run_pygame(
     game_board = Board(size=board_size)
     game_agent = Agent()
 
+    # Configure epsilon decay so epsilon reaches epsilon_min after nb_sessions
+    # formula: epsilon_decay = (epsilon_min / epsilon_start) ** (1 / nb_sessions)
+    try:
+        epsilon_start = float(getattr(game_agent, "epsilon", 1.0))
+        epsilon_min = float(getattr(game_agent, "epsilon_min", 0.01))
+        if nb_sessions > 0 and epsilon_start > 0:
+            game_agent.epsilon_decay = (epsilon_min / epsilon_start) ** (1.0 / nb_sessions)
+    except Exception:
+        # keep agent defaults on any unexpected issue
+        pass
+
     if mode == "game" and model_path:
         game_agent.load_q_table(model_path)
         game_agent.epsilon = 0.0
@@ -45,34 +56,36 @@ def run_pygame(
     first_render = True
     counter_games = 0
     training_sessions = 0
-    training_enabled = mode != "game"
+    training_enabled = mode != "game" and mode != "player game"
 
     # print("Pygame mode: arrows or WASD to steer, ESC to quit")
 
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE,):
+        if mode == "player game":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     running = False
-                elif event.key in (pygame.K_UP, pygame.K_w):
-                    game_board.get_snake().set_direction("UP")
-                elif event.key in (pygame.K_DOWN, pygame.K_s):
-                    game_board.get_snake().set_direction("DOWN")
-                elif event.key in (pygame.K_LEFT, pygame.K_a):
-                    game_board.get_snake().set_direction("LEFT")
-                elif event.key in (pygame.K_RIGHT, pygame.K_d):
-                    game_board.get_snake().set_direction("RIGHT")
-        # print (f"Step 1: sending state to agent...\n\n")
-        old_state = get_state_tuple(game_board.get_snake_vision())
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_ESCAPE,):
+                        running = False
+                    elif event.key in (pygame.K_UP, pygame.K_w):
+                        game_board.get_snake().set_direction("UP")
+                    elif event.key in (pygame.K_DOWN, pygame.K_s):
+                        game_board.get_snake().set_direction("DOWN")
+                    elif event.key in (pygame.K_LEFT, pygame.K_a):
+                        game_board.get_snake().set_direction("LEFT")
+                    elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                        game_board.get_snake().set_direction("RIGHT")
+        else:
+            # print (f"Step 1: sending state to agent...\n\n")
+            old_state = get_state_tuple(game_board.get_snake_vision())
 
-        # print (f"Step 2: receiving action from agent...\n")
-        action = game_agent.choose_action(old_state)
-        directions = ["UP", "DOWN", "LEFT", "RIGHT"]
-        game_board.get_snake().set_direction(directions[action])
+            # print (f"Step 2: receiving action from agent...\n")
+            action = game_agent.choose_action(old_state)
+            directions = ["UP", "DOWN", "LEFT", "RIGHT"]
+            game_board.get_snake().set_direction(directions[action])
 
-        if mode == "game":
+        if mode == "game" or mode == "player game":
             if first_render:
                 render(game_board, screen, cell_size=cell_size)
                 time.sleep(1.5)
@@ -92,10 +105,11 @@ def run_pygame(
                 if counter_games == 1:
                     training_sessions += 1
                     counter_games = 0
-                    if training_sessions in (nb_sessions):
-                        game_agent.save_q_table(f"q_table{training_sessions}.pkl")
+                    if training_sessions == nb_sessions:
+                        game_agent.save_q_table(f"models/q_table{training_sessions}.pkl")
+                        running = False
             game_board.reset()
-        if mode == "game":
+        if mode == "game" or mode == "player game":
             render(game_board, screen, cell_size=cell_size)
             clock.tick(fps)
 

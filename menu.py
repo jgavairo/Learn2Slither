@@ -20,6 +20,7 @@ def main_menu():
     choices = [
         "Game mode",
         "Training mode",
+        "Player game",
         "Exit"
     ]
     choice = questionary.select("Choose an option:", choices=choices).ask()
@@ -38,6 +39,8 @@ def main_menu():
         if nb_sessions == "":
             nb_sessions = 100
         run_pygame(mode="train", nb_sessions=int(nb_sessions))
+    elif choice == "Player game":
+        run_pygame(mode="player game", board_size=10, cell_size=32, fps=8)
     elif choice == "Exit":
         print("Exiting the game. Goodbye!")
         return -1
