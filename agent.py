@@ -29,9 +29,9 @@ class Agent :
         """
         Choose an action based on epsilon-greedy strategy.
         """
-        print (f"[AGENT] Choosing action for state:\n{state}\nEpsilon: {self.epsilon:.4f}")
+        # print (f"[AGENT] Choosing action for state:\n{state}\nEpsilon: {self.epsilon:.4f}")
         if random.random() < self.epsilon:
-            print (f"[AGENT] Exploring: choosing random action")
+            # print (f"[AGENT] Exploring: choosing random action")
             return random.choice(self.actions)
         else:
             q_values = self.get_q_values(state)
@@ -70,7 +70,7 @@ class Agent :
         """
         with open (filename, 'wb') as f:
             pickle.dump(self.q_table, f)
-        print (f"[AGENT] Q-table saved to {filename}")
+        # print (f"[AGENT] Q-table saved to {filename}")
 
     def load_q_table(self, filename: str):
         """ Function to load the q_table from a file """ 

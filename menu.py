@@ -38,7 +38,8 @@ def main_menu():
         nb_sessions = questionary.text("Enter the number of training sessions: (default 100)").ask()
         if nb_sessions == "":
             nb_sessions = 100
-        run_pygame(mode="train", nb_sessions=int(nb_sessions))
+        # Run training in headless mode by default to speed up learning
+        run_pygame(mode="train", nb_sessions=int(nb_sessions), headless=True)
     elif choice == "Player game":
         run_pygame(mode="player game", board_size=10, cell_size=32, fps=8)
     elif choice == "Exit":

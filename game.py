@@ -25,13 +25,16 @@ def run_pygame(
     fps: int = 8,
     mode: str = "train",
     model_path: str | None = None,
-    nb_sessions: int = 100
+    nb_sessions: int = 100,
+    headless: bool = False,
 ):
-    if pygame is None:
+    # If running headless (training without UI), don't require pygame
+    if not headless and pygame is None:
         # print("Pygame is not installed; falling back to terminal mode.")
         return
-
-    pygame.init()
+    if not headless and mode in ["game", "player game"]:
+        print(f"Mode: {mode}")
+        pygame.init()
     game_board = Board(size=board_size)
     game_agent = Agent()
 
@@ -49,19 +52,34 @@ def run_pygame(
     if mode == "game" and model_path:
         game_agent.load_q_table(model_path)
         game_agent.epsilon = 0.0
-
-    screen = ensure_screen(board_size, cell_size)
-    clock = pygame.time.Clock()
+    if mode != "train":
+        # create screen/clock only if not headless
+        screen = None
+        clock = None
+        if not headless:
+            screen = ensure_screen(board_size, cell_size)
+            clock = pygame.time.Clock()
     running = True
     first_render = True
     counter_games = 0
     training_sessions = 0
     training_enabled = mode != "game" and mode != "player game"
+    # Track best score during the whole training run
+    best_score = float("-inf")
+
+    def print_progress(completed: int, total: int, best: float):
+        if total <= 0:
+            return
+        bar_len = 40
+        pct = completed / total
+        filled = int(bar_len * pct)
+        bar = "[" + "#" * filled + "-" * (bar_len - filled) + "]"
+        print(f"\rTraining {completed}/{total} {bar} Best score: {best}", end="", flush=True)
 
     # print("Pygame mode: arrows or WASD to steer, ESC to quit")
 
     while running:
-        if mode == "player game":
+        if not headless and mode == "player game":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -85,7 +103,7 @@ def run_pygame(
             directions = ["UP", "DOWN", "LEFT", "RIGHT"]
             game_board.get_snake().set_direction(directions[action])
 
-        if mode == "game" or mode == "player game":
+        if not headless and (mode == "game" or mode == "player game"):
             if first_render:
                 render(game_board, screen, cell_size=cell_size)
                 time.sleep(1.5)
@@ -100,16 +118,24 @@ def run_pygame(
             if training_enabled:
                 game_agent.learn(old_state, action, reward, new_state, done)
         else:
+            # A game just finished
             counter_games += 1
+            # capture final score before reset
+            final_score = game_board.get_score()
+            if final_score > best_score:
+                best_score = final_score
+
             if training_enabled:
-                if counter_games == 1:
-                    training_sessions += 1
-                    counter_games = 0
-                    if training_sessions == nb_sessions:
-                        game_agent.save_q_table(f"models/q_table{training_sessions}.pkl")
-                        running = False
+                training_sessions += 1
+                # print progress after finishing a session
+                print_progress(training_sessions, nb_sessions, best_score)
+                if training_sessions == nb_sessions:
+                    game_agent.save_q_table(f"models/q_table{training_sessions}.pkl")
+                    # ensure we finish the progress bar line
+                    print()
+                    running = False
             game_board.reset()
-        if mode == "game" or mode == "player game":
+        if not headless and (mode == "game" or mode == "player game"):
             render(game_board, screen, cell_size=cell_size)
             clock.tick(fps)
     pygame.quit()
