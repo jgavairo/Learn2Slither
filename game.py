@@ -112,6 +112,4 @@ def run_pygame(
         if mode == "game" or mode == "player game":
             render(game_board, screen, cell_size=cell_size)
             clock.tick(fps)
-
-    print("Final Score:", game_board.get_score())  # Placeholder for actual score
     pygame.quit()

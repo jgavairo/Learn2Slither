@@ -1,7 +1,11 @@
 # board.py
 import random
+import time
 from food import Food
 import snake
+
+# Toggle verbose debugging (disabled by default to avoid flooding the UI)
+DEBUG = False
 
 
 class Board:
@@ -28,14 +32,18 @@ class Board:
         self.set_size(size)
         self.set_gameOver(False)
         self.set_score(0)
-        self.set_snake()
+        if self.set_snake() == 404:
+            self.set_gameOver(True)
+            return
         self.set_food()
 
 
     def reset(self):
         self.set_gameOver(False)
         self.set_score(0)
-        self.set_snake()
+        if self.set_snake() == 404:
+            self.set_gameOver(True)
+            return
         self.set_food()
 
     ################### SETTERS #####################
@@ -50,13 +58,38 @@ class Board:
         """
         Set the snake object on the board.
         """
-        while (True):
-            random_direction = self.get_random_direction()
-            random_position = self.generate_random_position()
 
-            if random_position[0] > 2 and random_position[0] < self._size - 2 and random_position[1] > 2 and random_position[1] < self._size - 2:
+        attempts = 0
+        random_direction = None
+        random_position = None
+
+        # When re-placing the snake (reset), avoid treating the old snake
+        # body as occupied — otherwise generate_random_position may never
+        # find a valid interior spot. Only consider food positions as occupied.
+        occupied_for_placement = set()
+        if self._food:
+            for f in self._food:
+                occupied_for_placement.add(f.get_position())
+
+        while True:
+            try:
+                attempts += 1
+                random_direction = self.get_random_direction()
+                random_position = self.generate_random_position(occupied_positions=occupied_for_placement)
+            except ValueError:
+                return 404
+
+            if (random_position[0] > 2 and random_position[0] < self._size - 2
+                    and random_position[1] > 2 and random_position[1] < self._size - 2):
                 break
-        
+
+            if DEBUG and attempts % 50 == 0:
+                print(f"[DEBUG][set_snake] attempt={attempts} pos={random_position} size={self._size}")
+
+            # Safety guard to avoid infinite loop on tiny boards
+            if attempts > 2000:
+                raise RuntimeError(f"Unable to place snake after {attempts} attempts. Board size={self._size}")
+
         _snake = snake.Snake(random_position, random_direction)
         self._snake = _snake
 
@@ -118,10 +151,9 @@ class Board:
 
 
     ################### METHODS #####################
-        
-    def generate_random_position(self) -> tuple:
+    def get_occupied_positions(self) -> set:
         """
-        Generate a random position on the board that is not occupied.
+        Get a set of positions occupied by the snake and food.
         """
         occupied_positions = set()
         if self._snake:
@@ -130,6 +162,16 @@ class Board:
         if self._food:
             for food_item in self._food:
                 occupied_positions.add(food_item.get_position())
+        return occupied_positions
+
+    def generate_random_position(self, occupied_positions: set = None) -> tuple:
+        """
+        Generate a random position on the board that is not occupied.
+        """
+        if occupied_positions is None:
+            occupied_positions = self.get_occupied_positions()
+        if len(occupied_positions) >= self._size * self._size:
+            raise ValueError("No available positions on the board.")
         
         while True:
             position = (random.randint(0, self._size - 1), random.randint(0, self._size - 1))
@@ -166,9 +208,21 @@ class Board:
         """
         Add a new food item at a random position.
         """
-        position = self.generate_random_position()
+        # Build the set of all board positions
+        all_positions = {(x, y) for x in range(self._size) for y in range(self._size)}
+        occupied = self.get_occupied_positions()
+
+        # Free positions are those not occupied by snake or existing food
+        free_positions = list(all_positions - occupied)
+        if not free_positions:
+            # No available cell to place new food
+            return 404
+
+        # Choose a random free cell deterministically from the available ones
+        position = random.choice(free_positions)
         food_item = Food(position, color)
         self._food.append(food_item)
+        return position
 
     def is_valid_position(self, position: tuple) -> bool:
         """
@@ -229,7 +283,6 @@ class Board:
         Return the snake vision in 4 directions from its head up to the wall.
         Each direction includes the head symbol as the first element.
         """
-        print (self._snake.get_body()[0])
         head_x, head_y = self._snake.get_body()[0]
         directions = {
             "UP": (0, -1),
@@ -240,31 +293,58 @@ class Board:
 
         vision: dict[str, list[int]] = {}
         for name, (dx, dy) in directions.items():
-            wall_distance : int = 0
-            green_apple_distance : int = 0
-            red_apple_distance : int = 0
-            steps : int = 0
+            wall_distance: int = 0
+            green_apple_distance: int = 0
+            red_apple_distance: int = 0
+            steps: int = 0
 
             x, y = head_x, head_y
+            iteration = 0
+            start_t = time.perf_counter()
+            max_steps = max(self._size * 3, 100)  # safety guard
+            if DEBUG:
+                print(f"[DEBUG][vision] direction={name} head=({head_x},{head_y}) dx={dx} dy={dy} max_steps={max_steps}")
 
             while True:
-
+                iteration += 1
                 x += dx
                 y += dy
                 steps += 1
 
-                if not self.is_valid_position((x, y)) or (x, y) in self._snake.get_body():
+                if DEBUG:
+                    elapsed = time.perf_counter() - start_t
+                    in_body = (x, y) in self._snake.get_body()
+                    symbol = self._symbol_at((x, y)) if self.is_valid_position((x, y)) else 'W'
+                    print(f"[DEBUG][vision] dir={name} iter={iteration} pos=({x},{y}) steps={steps} sym={symbol} in_body={in_body} elapsed={elapsed:.6f}s")
+
+                # Safety: break if we go beyond reasonable steps
+                if steps > max_steps:
+                    print(f"[DEBUG][vision][ERROR] exceeded max_steps={max_steps} in direction={name}; breaking")
                     wall_distance = steps
                     break
+
+                if not self.is_valid_position((x, y)) or (x, y) in self._snake.get_body():
+                    wall_distance = steps
+                    if DEBUG:
+                        print(f"[DEBUG][vision] hit wall/body at ({x},{y}) after {steps} steps")
+                    break
+
                 symbol = self._symbol_at((x, y))
                 if symbol == "G" and green_apple_distance == 0:
                     green_apple_distance = steps
+                    if DEBUG:
+                        print(f"[DEBUG][vision] found GREEN at ({x},{y}) steps={steps}")
                 if symbol == "R" and red_apple_distance == 0:
                     red_apple_distance = steps
+                    if DEBUG:
+                        print(f"[DEBUG][vision] found RED at ({x},{y}) steps={steps}")
+
             vision[name] = [self.simplify_distance(wall_distance), self.simplify_distance(green_apple_distance), self.simplify_distance(red_apple_distance)]
+            if DEBUG:
+                print(f"[DEBUG][vision] result {name} = {vision[name]}\n")
 
         return vision
-    
+
     def update(self):
         """
         Update the board state.
@@ -292,12 +372,16 @@ class Board:
                     self.decrease_score(10)
 
                 self.remove_food_at_position(next_position)
-                self.add_food(food_item.get_color())
+                if (self.add_food(food_item.get_color()) == 404):
+                    self._gameOver = True
+                    reward = 1000  # Snake wins by filling the board with its body
                 break
         if self._snake.is_alive():
             self._snake.move(next_position)
         else:
             self._gameOver = True
+
         if reward == 0:
             reward = -1
+
         return reward

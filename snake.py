@@ -1,27 +1,5 @@
 # snake.py
 
-#   USAGE EXAMPLE:
-# # Dans Game ou Board.update()
-# next_pos = self.snake.get_next_head()
-
-# # 1. VALIDATION
-# if self.is_out_of_bounds(next_pos):
-#     self.gameOver = True  # Game Over, pas de malus = punition suffit
-#     return
-
-# if self.is_collision(next_pos):
-#     self.gameOver = True
-#     return
-
-# # 2. SI VALIDE, le serpent bouge
-# self.snake.move(next_pos)
-
-# # 3. VÉRIFIER LES RÉCOMPENSES
-# if next_pos == self.food.position:
-#     self.score += 10
-#     self.snake.eat()
-#     self.food.spawn()
-
 class Snake:
     """
     Snake class representing the snake in the game with her position and direction.
@@ -65,7 +43,7 @@ class Snake:
         current_direction = getattr(self, '_direction', None)
         if direction in directions:
             # If current direction is not set yet, allow any initial direction.
-            if self._direction is not None:
+            if self._direction is not None and direction != current_direction:
                 if (directions[direction][0] == -self._direction[0] and
                     directions[direction][1] == -self._direction[1]):
                     return
@@ -113,6 +91,13 @@ class Snake:
         """
         return self._direction 
     
+    def get_length(self) -> int:
+        """
+        Get the current length of the snake.
+        """
+        print(len(self._body))
+        return len(self._body)
+    
 
     ### Actions ###
 
@@ -145,9 +130,4 @@ class Snake:
             else:
                 self.die()
 
-    # def share_vision(self) -> list[tuple]:
-    #     """
-    #     Share the snake's body positions for vision purposes.
-    #     """
-    #     return self._body.copy()
 
