@@ -38,8 +38,9 @@ def main_menu():
         nb_sessions = questionary.text("Enter the number of training sessions: (default 100)").ask()
         if nb_sessions == "":
             nb_sessions = 100
+        second_choice = questionary.confirm("Do you want to run training with display enabled?").ask()
         # Run training in headless mode by default to speed up learning
-        run_pygame(mode="train", nb_sessions=int(nb_sessions), headless=True)
+        run_pygame(mode="train", nb_sessions=int(nb_sessions), headless=not second_choice)
     elif choice == "Player game":
         run_pygame(mode="player game", board_size=10, cell_size=32, fps=8)
     elif choice == "Exit":
