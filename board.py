@@ -278,6 +278,41 @@ class Board:
             case _:
                 return 3
 
+    def display_vision(self):
+        """
+        Affiche la vision du serpent de manière linéaire et lisible.
+        Exemple: UP : 0 0 G 0 W
+        """
+        head_pos = self._snake.get_body()[0]
+        directions = {
+            "UP": (0, -1),
+            "DOWN": (0, 1),
+            "LEFT": (-1, 0),
+            "RIGHT": (1, 0),
+        }
+
+        print(f"\nVision (from Head):")
+        
+        for name, (dx, dy) in directions.items():
+            x, y = head_pos
+            line_symbols = []
+            
+            # On avance dans la direction jusqu'à heurter un mur ou le corps
+            while True:
+                x += dx
+                y += dy
+                
+                symbol = self._symbol_at((x, y))
+                line_symbols.append(symbol)
+                
+                # La vision s'arrête au premier obstacle bloquant (Mur ou Corps)
+                if symbol in ["W"]:
+                    break
+            
+            # On joint les symboles avec un espace pour la lisibilité
+            print(f"{name:5} : {' '.join(line_symbols)}")
+        print("")
+
     def get_snake_vision(self) -> dict[str, list[int]]:
         """
         Return the snake vision in 4 directions from its head up to the wall.
@@ -338,7 +373,7 @@ class Board:
                     red_apple_distance = steps
                     if DEBUG:
                         print(f"[DEBUG][vision] found RED at ({x},{y}) steps={steps}")
-
+            
             vision[name] = [self.simplify_distance(wall_distance), self.simplify_distance(green_apple_distance), self.simplify_distance(red_apple_distance)]
             if DEBUG:
                 print(f"[DEBUG][vision] result {name} = {vision[name]}\n")

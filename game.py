@@ -13,7 +13,6 @@ from agent import Agent
 
 def get_state_tuple(vision_dict):
     res = []
-    # On force l'ordre pour que l'IA ne soit pas perdue
     for direction in ["UP", "DOWN", "LEFT", "RIGHT"]:
         res.extend(vision_dict[direction])
     return tuple(res)
@@ -29,22 +28,19 @@ def run_pygame(
     headless: bool = False
 ):
     if pygame is None:
-        # print("Pygame is not installed; falling back to terminal mode.")
+        print("Pygame is not installed. Please install pygame to run the game with graphics.")
         return
 
     pygame.init()
     game_board = Board(size=board_size)
     game_agent = Agent()
 
-    # Configure epsilon decay so epsilon reaches epsilon_min after nb_sessions
-    # formula: epsilon_decay = (epsilon_min / epsilon_start) ** (1 / nb_sessions)
     try:
         epsilon_start = float(getattr(game_agent, "epsilon", 1.0))
         epsilon_min = float(getattr(game_agent, "epsilon_min", 0.01))
         if nb_sessions > 0 and epsilon_start > 0:
             game_agent.epsilon_decay = (epsilon_min / epsilon_start) ** (1.0 / nb_sessions)
     except Exception:
-        # keep agent defaults on any unexpected issue
         pass
 
     if mode == "game" and model_path:
@@ -59,10 +55,10 @@ def run_pygame(
     training_sessions = 0
     training_enabled = mode != "game" and mode != "player game"
     best_score = 0
-
-    # print("Pygame mode: arrows or WASD to steer, ESC to quit")
+    step = 0
 
     while running:
+        step += 1
         if mode == "player game":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -79,16 +75,20 @@ def run_pygame(
                     elif event.key in (pygame.K_RIGHT, pygame.K_d):
                         game_board.get_snake().set_direction("RIGHT")
         else:
-            # Traiter les événements pour garder la fenêtre active même en mode IA
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-            # print (f"Step 1: sending state to agent...\n\n")
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_ESCAPE,):
+                        running = False
             old_state = get_state_tuple(game_board.get_snake_vision())
-
-            # print (f"Step 2: receiving action from agent...\n")
             action = game_agent.choose_action(old_state)
             directions = ["UP", "DOWN", "LEFT", "RIGHT"]
+            if mode != "train":
+                game_board.display_vision()
+                print(f"Action chosen: {directions[action]}")
+                print(f"Current score: {game_board.get_score()}")
+                print(f"Current step: {step}")
             game_board.get_snake().set_direction(directions[action])
 
         if not headless:
@@ -120,5 +120,5 @@ def run_pygame(
             render(game_board, screen, cell_size=cell_size)
             clock.tick(fps)
 
-    print("Best Score:", best_score)  # Placeholder for actual score
+    print("Best Score:", best_score) 
     pygame.quit()
