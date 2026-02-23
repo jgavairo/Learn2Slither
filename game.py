@@ -21,12 +21,18 @@ def get_state_tuple(vision_dict):
 def run_pygame(
     board_size: int = 10,
     cell_size: int = 32,
-    fps: int = 8,
+    fps: int = 60,
     mode: str = "train",
     model_path: str | None = None,
     nb_sessions: int = 100,
     headless: bool = False
 ):
+    try:
+        from tqdm import tqdm
+    except ImportError:
+        tqdm = None
+        if mode == "train":
+            print("tqdm is not installed. Progress bar will be disabled during training.")
     if pygame is None:
         print("Pygame is not installed. Please install pygame to run the game with graphics.")
         return
@@ -56,6 +62,10 @@ def run_pygame(
     training_enabled = mode != "game" and mode != "player game"
     best_score = 0
     step = 0
+
+    pbar = None
+    if training_enabled and tqdm is not None:
+        pbar = tqdm(total=nb_sessions, desc="Training", unit="session")
 
     while running:
         step += 1
@@ -108,17 +118,22 @@ def run_pygame(
         else:
             if training_enabled:
                 training_sessions += 1
+                if pbar:
+                    pbar.update(1)
                 if training_sessions == nb_sessions:
                     game_agent.save_q_table(f"models/q_table{training_sessions}.pkl")
-                    print(f"[TRAINING] {nb_sessions} sessions atteintes. Entraînement terminé.")
                     running = False
             current_score = game_board.get_score()
             if current_score > best_score:
                 best_score = current_score
             game_board.reset()
+            step = 0
         if not headless:
             render(game_board, screen, cell_size=cell_size)
             clock.tick(fps)
 
+    if pbar:
+        pbar.close()
+        print()  # Pour forcer un retour à la ligne propre après tqdm
     print("Best Score:", best_score) 
     pygame.quit()
