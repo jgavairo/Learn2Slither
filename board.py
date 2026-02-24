@@ -409,7 +409,7 @@ class Board:
                 self.remove_food_at_position(next_position)
                 if (self.add_food(food_item.get_color()) == 404):
                     self._gameOver = True
-                    reward = 1000  # Snake wins by filling the board with its body
+                    reward = 1000
                 break
         if self._snake.is_alive():
             self._snake.move(next_position)

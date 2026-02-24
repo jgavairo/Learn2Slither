@@ -63,6 +63,9 @@ def run_pygame(
     best_score = 0
     step = 0
 
+    paused = False
+    advance_one_step = False
+
     pbar = None
     if training_enabled and tqdm is not None:
         pbar = tqdm(total=nb_sessions, desc="Training", unit="session")
@@ -85,12 +88,31 @@ def run_pygame(
                     elif event.key in (pygame.K_RIGHT, pygame.K_d):
                         game_board.get_snake().set_direction("RIGHT")
         else:
+            advance_one_step = False
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_ESCAPE,):
+                    if event.key == pygame.K_ESCAPE:
                         running = False
+                    elif mode == "game" and event.key == pygame.K_SPACE:
+                        paused = not paused
+                        print("Paused" if paused else "Resumed")
+                    elif mode == "game" and event.key == pygame.K_RIGHT:
+                        if paused:
+                            advance_one_step = True
+                    elif mode == "game" and event.key == pygame.K_r:
+                        game_board.reset()
+                        step = 0
+                        print("Game reset")
+
+            if paused and not advance_one_step:
+                if not headless:
+                    render(game_board, screen, cell_size=cell_size)
+                    clock.tick(fps)
+                step -= 1
+                continue
+
             old_state = get_state_tuple(game_board.get_snake_vision())
             action = game_agent.choose_action(old_state)
             directions = ["UP", "DOWN", "LEFT", "RIGHT"]
@@ -134,6 +156,6 @@ def run_pygame(
 
     if pbar:
         pbar.close()
-        print()  # Pour forcer un retour à la ligne propre après tqdm
-    print("Best Score:", best_score) 
+        print()
+    print("Best Score:", best_score)
     pygame.quit()
