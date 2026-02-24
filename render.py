@@ -9,7 +9,6 @@ FOOD_GREEN_COLOR = (90, 200, 90)
 FOOD_RED_COLOR = (220, 70, 70)
 
 
-
 def ensure_screen(size: int, cell_size: int = 32):
     """Create a pygame display surface sized to the board."""
     width = size * cell_size
@@ -27,15 +26,31 @@ def render(board, screen, cell_size: int = 32, draw_grid: bool = True):
 
     if draw_grid:
         for i in range(size + 1):
-            pygame.draw.line(screen, GRID_COLOR, (i * cell_size, 0), (i * cell_size, size * cell_size))
-            pygame.draw.line(screen, GRID_COLOR, (0, i * cell_size), (size * cell_size, i * cell_size))
+            pygame.draw.line(
+                screen,
+                GRID_COLOR,
+                (i * cell_size, 0),
+                (i * cell_size, size * cell_size),
+            )
+            pygame.draw.line(
+                screen,
+                GRID_COLOR,
+                (0, i * cell_size),
+                (size * cell_size, i * cell_size),
+            )
 
     # Draw food
     for food in board.get_food():
         fx, fy = food.get_position()
-        color = FOOD_GREEN_COLOR if food.get_color() == "GREEN" else FOOD_RED_COLOR
-        rect = pygame.Rect(fx * cell_size, fy * cell_size, cell_size, cell_size)
-        pygame.draw.circle(screen, color, rect.center, cell_size // 3)
+        color = (
+            FOOD_GREEN_COLOR if food.get_color() == "GREEN" else FOOD_RED_COLOR
+        )
+        rect = pygame.Rect(
+            fx * cell_size, fy * cell_size, cell_size, cell_size
+        )
+        pygame.draw.circle(
+            screen, color, rect.center, cell_size // 3
+        )
 
     # Draw snake
     snake = board.get_snake()

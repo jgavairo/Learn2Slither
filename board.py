@@ -9,12 +9,9 @@ DEBUG = False
 
 
 class Board:
-    """
-    Board class representing the game board.
-    """
+    """Board class representing the game board."""
 
-
-    ################### ATTRIBUTES #####################
+    # ATTRIBUTES
 
     _size: int = 10
     _gameOver: bool = False
@@ -22,8 +19,7 @@ class Board:
     _snake: snake.Snake = None
     _food: list[Food] = []
 
-
-    ################### CONSTRUCTOR #####################
+    # CONSTRUCTOR
 
     def __init__(self, size=10):
         """
@@ -46,7 +42,7 @@ class Board:
             return
         self.set_food()
 
-    ################### SETTERS #####################
+    # SETTERS
 
     def set_size(self, size: int):
         """
@@ -55,17 +51,14 @@ class Board:
         self._size = size
 
     def set_snake(self):
-        """
-        Set the snake object on the board.
-        """
+        """Set the snake object on the board."""
 
         attempts = 0
         random_direction = None
         random_position = None
 
         # When re-placing the snake (reset), avoid treating the old snake
-        # body as occupied — otherwise generate_random_position may never
-        # find a valid interior spot. Only consider food positions as occupied.
+        # body as occupied. Only consider food positions as occupied.
         occupied_for_placement = set()
         if self._food:
             for f in self._food:
@@ -75,28 +68,38 @@ class Board:
             try:
                 attempts += 1
                 random_direction = self.get_random_direction()
-                random_position = self.generate_random_position(occupied_positions=occupied_for_placement)
+                random_position = self.generate_random_position(
+                    occupied_positions=occupied_for_placement
+                )
             except ValueError:
                 return 404
 
-            if (random_position[0] > 2 and random_position[0] < self._size - 2
-                    and random_position[1] > 2 and random_position[1] < self._size - 2):
+            if (
+                random_position[0] > 2
+                and random_position[0] < self._size - 2
+                and random_position[1] > 2
+                and random_position[1] < self._size - 2
+            ):
                 break
 
             if DEBUG and attempts % 50 == 0:
-                print(f"[DEBUG][set_snake] attempt={attempts} pos={random_position} size={self._size}")
+                print(
+                    "[DEBUG][set_snake]"
+                    f" attempt={attempts} pos={random_position} size={self._size}"
+                )
 
             # Safety guard to avoid infinite loop on tiny boards
             if attempts > 2000:
-                raise RuntimeError(f"Unable to place snake after {attempts} attempts. Board size={self._size}")
+                raise RuntimeError(
+                    f"Unable to place snake after {attempts} attempts."
+                    f" Board size={self._size}"
+                )
 
         _snake = snake.Snake(random_position, random_direction)
         self._snake = _snake
 
     def set_food(self):
-        """
-        Set the food objects on the board.
-        """
+        """Set the food objects on the board."""
         food_list = []
         for color in ["RED", "GREEN", "GREEN"]:
             position = self.generate_random_position()
@@ -117,7 +120,7 @@ class Board:
         self._gameOver = status
 
     
-    ################### GETTERS #####################
+    # GETTERS
 
     def get_size(self) -> int:
         """
@@ -150,7 +153,8 @@ class Board:
         return self._gameOver
 
 
-    ################### METHODS #####################
+    # METHODS
+
     def get_occupied_positions(self) -> set:
         """
         Get a set of positions occupied by the snake and food.
@@ -174,11 +178,13 @@ class Board:
             raise ValueError("No available positions on the board.")
         
         while True:
-            position = (random.randint(0, self._size - 1), random.randint(0, self._size - 1))
+            position = (
+                random.randint(0, self._size - 1),
+                random.randint(0, self._size - 1),
+            )
             if position not in occupied_positions:
                 occupied_positions.add(position)
                 return position
-            
     def get_random_direction(self) -> str:
         """
         Get a random direction for the snake.
@@ -291,8 +297,8 @@ class Board:
             "RIGHT": (1, 0),
         }
 
-        print(f"\nVision (from Head):")
-        
+        print("\nVision (from Head):")
+
         for name, (dx, dy) in directions.items():
             x, y = head_pos
             line_symbols = []
@@ -309,9 +315,9 @@ class Board:
                 if symbol in ["W"]:
                     break
             
-            # On joint les symboles avec un espace pour la lisibilité
+            # Join symbols with spaces for readability
             print(f"{name:5} : {' '.join(line_symbols)}")
-        print("")
+        print()
 
     def get_snake_vision(self) -> dict[str, list[int]]:
         """
@@ -338,7 +344,10 @@ class Board:
             start_t = time.perf_counter()
             max_steps = max(self._size * 3, 100)  # safety guard
             if DEBUG:
-                print(f"[DEBUG][vision] direction={name} head=({head_x},{head_y}) dx={dx} dy={dy} max_steps={max_steps}")
+                print(
+                    "[DEBUG][vision]"
+                    f" direction={name} head=({head_x},{head_y}) dx={dx} dy={dy} max_steps={max_steps}"
+                )
 
             while True:
                 iteration += 1
@@ -350,33 +359,51 @@ class Board:
                     elapsed = time.perf_counter() - start_t
                     in_body = (x, y) in self._snake.get_body()
                     symbol = self._symbol_at((x, y)) if self.is_valid_position((x, y)) else 'W'
-                    print(f"[DEBUG][vision] dir={name} iter={iteration} pos=({x},{y}) steps={steps} sym={symbol} in_body={in_body} elapsed={elapsed:.6f}s")
+                    print(
+                        "[DEBUG][vision]"
+                        f" dir={name} iter={iteration} pos=({x},{y}) steps={steps} sym={symbol} in_body={in_body} elapsed={elapsed:.6f}s"
+                    )
 
                 # Safety: break if we go beyond reasonable steps
                 if steps > max_steps:
-                    print(f"[DEBUG][vision][ERROR] exceeded max_steps={max_steps} in direction={name}; breaking")
+                    print(
+                        "[DEBUG][vision][ERROR]"
+                        f" exceeded max_steps={max_steps} in direction={name}; breaking"
+                    )
                     wall_distance = steps
                     break
 
                 if not self.is_valid_position((x, y)) or (x, y) in self._snake.get_body():
                     wall_distance = steps
                     if DEBUG:
-                        print(f"[DEBUG][vision] hit wall/body at ({x},{y}) after {steps} steps")
+                        print(
+                            "[DEBUG][vision] hit wall/body"
+                            f" at ({x},{y}) after {steps} steps"
+                        )
                     break
 
                 symbol = self._symbol_at((x, y))
                 if symbol == "G" and green_apple_distance == 0:
                     green_apple_distance = steps
                     if DEBUG:
-                        print(f"[DEBUG][vision] found GREEN at ({x},{y}) steps={steps}")
+                        print(
+                            "[DEBUG][vision] found GREEN"
+                            f" at ({x},{y}) steps={steps}"
+                        )
                 if symbol == "R" and red_apple_distance == 0:
                     red_apple_distance = steps
                     if DEBUG:
-                        print(f"[DEBUG][vision] found RED at ({x},{y}) steps={steps}")
+                        print(
+                            "[DEBUG][vision] found RED"
+                            f" at ({x},{y}) steps={steps}"
+                        )
             
             vision[name] = [self.simplify_distance(wall_distance), self.simplify_distance(green_apple_distance), self.simplify_distance(red_apple_distance)]
             if DEBUG:
-                print(f"[DEBUG][vision] result {name} = {vision[name]}\n")
+                print(
+                    "[DEBUG][vision] result"
+                    f" {name} = {vision[name]}\n"
+                )
 
         return vision
 

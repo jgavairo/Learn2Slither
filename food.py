@@ -1,15 +1,14 @@
 # food.py
 
 class Food:
-    """
-    Food class representing the food item in the game with her position.
-    """
-    ################### ATTRIBUTES #####################
+    """Food class representing the food item on the board."""
+
+    # ATTRIBUTES
 
     _position: tuple
-    _color:    str
+    _color: str
 
-    ################### CONSTRUCTOR #####################
+    # CONSTRUCTOR
 
     def __init__(self, position: tuple, color: str):
         """
@@ -20,10 +19,9 @@ class Food:
         self._position = position
         self._color = color
 
-    ################### METHODS #####################
+    # METHODS
 
-    ### Getters ###
-
+    # Getters
     def get_position(self) -> tuple:
         """
         Get the current position of the food.
@@ -31,7 +29,5 @@ class Food:
         return self._position
     
     def get_color(self) -> str:
-        """
-        Get the color of the food.
-        """
+        """Get the color of the food."""
         return self._color

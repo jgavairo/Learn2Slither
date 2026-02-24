@@ -143,7 +143,8 @@ def run_pygame(
                 if pbar:
                     pbar.update(1)
                 if training_sessions == nb_sessions:
-                    game_agent.save_q_table(f"models/q_table{training_sessions}.pkl")
+                    filename = f"models/q_table_{training_sessions}.pkl"
+                    game_agent.save_q_table(filename)
                     running = False
             current_score = game_board.get_score()
             if current_score > best_score:
@@ -158,4 +159,5 @@ def run_pygame(
         pbar.close()
         print()
     print("Best Score:", best_score)
+    
     pygame.quit()
