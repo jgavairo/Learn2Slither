@@ -21,7 +21,7 @@ def get_state_tuple(vision_dict):
 def run_pygame(
     board_size: int = 10,
     cell_size: int = 32,
-    fps: int = 60,
+    game_tick_ms: int = 100,
     mode: str = "train",
     model_path: str | None = None,
     nb_sessions: int = 100,
@@ -74,12 +74,16 @@ def run_pygame(
     paused = False
     advance_one_step = False
 
+    # In headless mode, no throttle — training runs as fast as possible.
+    effective_tick_ms = 0 if headless else game_tick_ms
+    last_tick_time = pygame.time.get_ticks()
+
     pbar = None
     if training_enabled and tqdm is not None:
         pbar = tqdm(total=nb_sessions, desc="Training", unit="session")
 
     while running:
-        step += 1
+        # --- Event handling ---
         if mode == "player game":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -112,15 +116,39 @@ def run_pygame(
                     elif mode == "game" and event.key == pygame.K_r:
                         game_board.reset()
                         step = 0
+                        last_tick_time = pygame.time.get_ticks()
                         print("Game reset")
 
+            # --- Pause handling ---
             if paused and not advance_one_step:
                 if not headless:
                     render(game_board, screen, cell_size=cell_size)
-                    clock.tick(fps)
-                step -= 1
+                    clock.tick(60)
                 continue
 
+        # --- First render splash ---
+        if not headless:
+            if first_render:
+                render(game_board, screen, cell_size=cell_size)
+                time.sleep(1.5)
+                first_render = False
+                last_tick_time = pygame.time.get_ticks()
+                clock.tick(60)
+                continue
+
+        # --- Game tick throttle ---
+        now = pygame.time.get_ticks()
+        if effective_tick_ms > 0 and not advance_one_step:
+            if now - last_tick_time < effective_tick_ms:
+                if not headless:
+                    render(game_board, screen, cell_size=cell_size)
+                    clock.tick(60)
+                continue
+        last_tick_time = now
+
+        # --- Logic update ---
+        step += 1
+        if mode != "player game":
             old_state = get_state_tuple(game_board.get_snake_vision())
             action = game_agent.choose_action(old_state)
             directions = ["UP", "DOWN", "LEFT", "RIGHT"]
@@ -130,14 +158,6 @@ def run_pygame(
                 print(f"Current score: {game_board.get_score()}")
                 print(f"Current step: {step}")
             game_board.get_snake().set_direction(directions[action])
-
-        if not headless:
-            if first_render:
-                render(game_board, screen, cell_size=cell_size)
-                time.sleep(1.5)
-                first_render = False
-                clock.tick(fps)
-                continue
 
         if not game_board.is_gameOver():
             reward = game_board.update()
@@ -159,9 +179,10 @@ def run_pygame(
                 best_score = current_score
             game_board.reset()
             step = 0
+
         if not headless:
             render(game_board, screen, cell_size=cell_size)
-            clock.tick(fps)
+            clock.tick(60)
 
     if pbar:
         pbar.close()

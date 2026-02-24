@@ -3,6 +3,12 @@ import os
 from game import run_pygame
 
 
+SPEED_OPTIONS = {
+    "Fast": 100 // 8,
+    "Normal": 1000 // 8,
+}
+
+
 def get_model_list():
     """
     Get the list of available models in the "models" directory.
@@ -13,6 +19,18 @@ def get_model_list():
 
     model_files = [f for f in os.listdir(models_dir) if f.endswith(".pkl")]
     return model_files
+
+
+def ask_speed():
+    """Ask the user for a speed and return the corresponding game_tick_ms."""
+    speed_choice = questionary.select(
+        "Choose a speed:", choices=list(SPEED_OPTIONS.keys()) + ["← Back"]
+    ).ask()
+
+    if speed_choice is None or speed_choice == "← Back":
+        return None
+
+    return SPEED_OPTIONS[speed_choice]
 
 
 def game_mode_menu():
@@ -29,12 +47,16 @@ def game_mode_menu():
     if model_choice is None or model_choice == "← Back":
         return
 
+    game_tick_ms = ask_speed()
+    if game_tick_ms is None:
+        return
+
     model_path = os.path.join("models", model_choice)
     run_pygame(
         mode="game",
         board_size=10,
         cell_size=32,
-        fps=8,
+        game_tick_ms=game_tick_ms,
         model_path=model_path,
     )
 
@@ -69,9 +91,16 @@ def training_mode_menu():
     if second_choice is None:
         return
 
+    game_tick_ms = 0
+    if second_choice:
+        game_tick_ms = ask_speed()
+        if game_tick_ms is None:
+            return
+
     run_pygame(
         mode="train",
         nb_sessions=nb_sessions,
+        game_tick_ms=game_tick_ms,
         headless=not second_choice,
     )
 
@@ -97,5 +126,4 @@ def main_menu():
                 mode="player game",
                 board_size=10,
                 cell_size=32,
-                fps=8,
             )
