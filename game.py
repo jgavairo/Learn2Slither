@@ -152,7 +152,7 @@ def run_pygame(
             old_state = get_state_tuple(game_board.get_snake_vision())
             action = game_agent.choose_action(old_state)
             directions = ["UP", "DOWN", "LEFT", "RIGHT"]
-            if mode != "train":
+            if not headless:
                 game_board.display_vision()
                 print(f"Action chosen: {directions[action]}")
                 print(f"Current score: {game_board.get_score()}")
