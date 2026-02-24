@@ -25,16 +25,22 @@ def run_pygame(
     mode: str = "train",
     model_path: str | None = None,
     nb_sessions: int = 100,
-    headless: bool = False
+    headless: bool = False,
 ):
     try:
         from tqdm import tqdm
     except ImportError:
         tqdm = None
         if mode == "train":
-            print("tqdm is not installed. Progress bar will be disabled during training.")
+            print(
+                "tqdm is not installed. \
+                    Progress bar will be disabled during training."
+            )
     if pygame is None:
-        print("Pygame is not installed. Please install pygame to run the game with graphics.")
+        print(
+            "Pygame is not installed. \
+                Please install pygame to run the game with graphics."
+        )
         return
 
     pygame.init()
@@ -45,7 +51,9 @@ def run_pygame(
         epsilon_start = float(getattr(game_agent, "epsilon", 1.0))
         epsilon_min = float(getattr(game_agent, "epsilon_min", 0.01))
         if nb_sessions > 0 and epsilon_start > 0:
-            game_agent.epsilon_decay = (epsilon_min / epsilon_start) ** (1.0 / nb_sessions)
+            game_agent.epsilon_decay = (epsilon_min / epsilon_start) ** (
+                1.0 / nb_sessions
+            )
     except Exception:
         pass
 
@@ -159,5 +167,5 @@ def run_pygame(
         pbar.close()
         print()
     print("Best Score:", best_score)
-    
+
     pygame.quit()

@@ -10,7 +10,7 @@ def get_model_list():
     models_dir = "models"
     if not os.path.exists(models_dir):
         return []
-    
+
     model_files = [f for f in os.listdir(models_dir) if f.endswith(".pkl")]
     return model_files
 
@@ -50,8 +50,11 @@ def training_mode_menu():
         return True
 
     nb_sessions = questionary.text(
-        "Enter the number of training sessions (default 100, or 'back' to go back):",
-        validate=lambda v: True if v.strip().lower() == "back" else validate_sessions(v),
+        "Enter the number of training sessions \
+            (default 100, or 'back' to go back):",
+        validate=lambda v: (
+            True if v.strip().lower() == "back" else validate_sessions(v)
+        ),
     ).ask()
 
     if nb_sessions is None or nb_sessions.strip().lower() == "back":
@@ -77,12 +80,7 @@ def main_menu():
     """
     Display the main menu and handle user choices.
     """
-    choices = [
-        "Game mode",
-        "Training mode",
-        "Player game",
-        "Exit"
-    ]
+    choices = ["Game mode", "Training mode", "Player game", "Exit"]
 
     while True:
         choice = questionary.select("Choose an option:", choices=choices).ask()

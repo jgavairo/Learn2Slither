@@ -1,6 +1,5 @@
 # board.py
 import random
-import time
 from food import Food
 import snake
 
@@ -33,7 +32,6 @@ class Board:
             return
         self.set_food()
 
-
     def reset(self):
         self.set_gameOver(False)
         self.set_score(0)
@@ -52,7 +50,6 @@ class Board:
 
     def set_snake(self):
         """Set the snake object on the board."""
-
         attempts = 0
         random_direction = None
         random_position = None
@@ -85,7 +82,8 @@ class Board:
             if DEBUG and attempts % 50 == 0:
                 print(
                     "[DEBUG][set_snake]"
-                    f" attempt={attempts} pos={random_position} size={self._size}"
+                    f" attempt={attempts} pos={random_position}"
+                    f" size={self._size}"
                 )
 
             # Safety guard to avoid infinite loop on tiny boards
@@ -119,7 +117,6 @@ class Board:
         """
         self._gameOver = status
 
-    
     # GETTERS
 
     def get_size(self) -> int:
@@ -127,37 +124,36 @@ class Board:
         Get the size of the board.
         """
         return self._size
-    
+
     def get_snake(self) -> snake.Snake:
         """
         Get the snake object on the board.
         """
         return self._snake
-    
+
     def get_food(self) -> list[Food]:
         """
         Get the food objects on the board.
         """
         return self._food
-    
+
     def get_score(self) -> int:
         """
         Get the current score of the game.
         """
         return self._score
-    
+
     def is_gameOver(self) -> bool:
         """
         Check if the game is over.
         """
         return self._gameOver
 
-
     # METHODS
 
     def get_occupied_positions(self) -> set:
         """
-        Get a set of positions occupied by the snake and food.
+        Get positions occupied by snake and food.
         """
         occupied_positions = set()
         if self._snake:
@@ -168,7 +164,8 @@ class Board:
                 occupied_positions.add(food_item.get_position())
         return occupied_positions
 
-    def generate_random_position(self, occupied_positions: set = None) -> tuple:
+    def generate_random_position(
+            self, occupied_positions: set = None) -> tuple:
         """
         Generate a random position on the board that is not occupied.
         """
@@ -176,7 +173,7 @@ class Board:
             occupied_positions = self.get_occupied_positions()
         if len(occupied_positions) >= self._size * self._size:
             raise ValueError("No available positions on the board.")
-        
+
         while True:
             position = (
                 random.randint(0, self._size - 1),
@@ -185,13 +182,14 @@ class Board:
             if position not in occupied_positions:
                 occupied_positions.add(position)
                 return position
+
     def get_random_direction(self) -> str:
         """
         Get a random direction for the snake.
         """
         directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
         return random.choice(directions)
-    
+
     def increase_score(self, points: int):
         """
         Increase the current score by a given number of points.
@@ -208,14 +206,18 @@ class Board:
         """
         Remove the food item at the given position.
         """
-        self._food = [food for food in self._food if food.get_position() != position]
+        self._food = [
+            f for f in self._food if f.get_position() != position
+        ]
 
     def add_food(self, color: str):
         """
         Add a new food item at a random position.
         """
         # Build the set of all board positions
-        all_positions = {(x, y) for x in range(self._size) for y in range(self._size)}
+        all_positions = {
+            (x, y) for x in range(self._size) for y in range(self._size)
+        }
         occupied = self.get_occupied_positions()
 
         # Free positions are those not occupied by snake or existing food
@@ -224,7 +226,7 @@ class Board:
             # No available cell to place new food
             return 404
 
-        # Choose a random free cell deterministically from the available ones
+        # Choose a random free cell
         position = random.choice(free_positions)
         food_item = Food(position, color)
         self._food.append(food_item)
@@ -241,7 +243,8 @@ class Board:
         """
         Verify if the given position collides with the snake's body.
         """
-        if (not self.is_valid_position(position) or position in self._snake.get_body()):
+        if (not self.is_valid_position(position) or
+                position in self._snake.get_body()):
             self._gameOver = True
             return True
 
@@ -287,7 +290,6 @@ class Board:
     def display_vision(self):
         """
         Affiche la vision du serpent de manière linéaire et lisible.
-        Exemple: UP : 0 0 G 0 W
         """
         head_pos = self._snake.get_body()[0]
         directions = {
@@ -302,19 +304,16 @@ class Board:
         for name, (dx, dy) in directions.items():
             x, y = head_pos
             line_symbols = []
-            
+
             # On avance dans la direction jusqu'à heurter un mur ou le corps
             while True:
                 x += dx
                 y += dy
-                
                 symbol = self._symbol_at((x, y))
                 line_symbols.append(symbol)
-                
-                # La vision s'arrête au premier obstacle bloquant (Mur ou Corps)
                 if symbol in ["W"]:
                     break
-            
+
             # Join symbols with spaces for readability
             print(f"{name:5} : {' '.join(line_symbols)}")
         print()
@@ -322,7 +321,6 @@ class Board:
     def get_snake_vision(self) -> dict[str, list[int]]:
         """
         Return the snake vision in 4 directions from its head up to the wall.
-        Each direction includes the head symbol as the first element.
         """
         head_x, head_y = self._snake.get_body()[0]
         directions = {
@@ -340,70 +338,38 @@ class Board:
             steps: int = 0
 
             x, y = head_x, head_y
-            iteration = 0
-            start_t = time.perf_counter()
             max_steps = max(self._size * 3, 100)  # safety guard
-            if DEBUG:
-                print(
-                    "[DEBUG][vision]"
-                    f" direction={name} head=({head_x},{head_y}) dx={dx} dy={dy} max_steps={max_steps}"
-                )
 
             while True:
-                iteration += 1
                 x += dx
                 y += dy
                 steps += 1
 
                 if DEBUG:
-                    elapsed = time.perf_counter() - start_t
-                    in_body = (x, y) in self._snake.get_body()
-                    symbol = self._symbol_at((x, y)) if self.is_valid_position((x, y)) else 'W'
-                    print(
-                        "[DEBUG][vision]"
-                        f" dir={name} iter={iteration} pos=({x},{y}) steps={steps} sym={symbol} in_body={in_body} elapsed={elapsed:.6f}s"
-                    )
+                    symbol = self._symbol_at((x, y)) if \
+                        self.is_valid_position((x, y)) else 'W'
+                    print(f"[DEBUG] dir={name} pos=({x},{y}) sym={symbol}")
 
-                # Safety: break if we go beyond reasonable steps
                 if steps > max_steps:
-                    print(
-                        "[DEBUG][vision][ERROR]"
-                        f" exceeded max_steps={max_steps} in direction={name}; breaking"
-                    )
                     wall_distance = steps
                     break
 
-                if not self.is_valid_position((x, y)) or (x, y) in self._snake.get_body():
+                if not self.is_valid_position((x, y)) or \
+                   (x, y) in self._snake.get_body():
                     wall_distance = steps
-                    if DEBUG:
-                        print(
-                            "[DEBUG][vision] hit wall/body"
-                            f" at ({x},{y}) after {steps} steps"
-                        )
                     break
 
                 symbol = self._symbol_at((x, y))
                 if symbol == "G" and green_apple_distance == 0:
                     green_apple_distance = steps
-                    if DEBUG:
-                        print(
-                            "[DEBUG][vision] found GREEN"
-                            f" at ({x},{y}) steps={steps}"
-                        )
                 if symbol == "R" and red_apple_distance == 0:
                     red_apple_distance = steps
-                    if DEBUG:
-                        print(
-                            "[DEBUG][vision] found RED"
-                            f" at ({x},{y}) steps={steps}"
-                        )
-            
-            vision[name] = [self.simplify_distance(wall_distance), self.simplify_distance(green_apple_distance), self.simplify_distance(red_apple_distance)]
-            if DEBUG:
-                print(
-                    "[DEBUG][vision] result"
-                    f" {name} = {vision[name]}\n"
-                )
+
+            vision[name] = [
+                self.simplify_distance(wall_distance),
+                self.simplify_distance(green_apple_distance),
+                self.simplify_distance(red_apple_distance)
+            ]
 
         return vision
 
@@ -415,13 +381,13 @@ class Board:
 
         if self._gameOver:
             return
-        
+
         next_position = self._snake.get_next_head()
 
         if self.verify_collision(next_position):
             reward = -100
             return reward
-        
+
         for food_item in self._food:
             if food_item.get_position() == next_position:
                 item_color = food_item.get_color()

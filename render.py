@@ -46,20 +46,23 @@ def render(board, screen, cell_size: int = 32, draw_grid: bool = True):
             FOOD_GREEN_COLOR if food.get_color() == "GREEN" else FOOD_RED_COLOR
         )
         rect = pygame.Rect(
-            fx * cell_size, fy * cell_size, cell_size, cell_size
-        )
-        pygame.draw.circle(
-            screen, color, rect.center, cell_size // 3
-        )
+            fx * cell_size, fy * cell_size, cell_size, cell_size)
+        pygame.draw.circle(screen, color, rect.center, cell_size // 3)
 
     # Draw snake
     snake = board.get_snake()
     if snake:
         for i, (sx, sy) in enumerate(snake.get_body()):
-            rect = pygame.Rect(sx * cell_size, sy * cell_size, cell_size, cell_size)
+            rect = pygame.Rect(
+                sx * cell_size, sy * cell_size, cell_size, cell_size
+            )
             if i == 0:
-                pygame.draw.rect(screen, SNAKE_HEAD_COLOR, rect, border_radius=6)
+                pygame.draw.rect(
+                    screen, SNAKE_HEAD_COLOR, rect, border_radius=6
+                )
             else:
-                pygame.draw.rect(screen, SNAKE_BODY_COLOR, rect, border_radius=6)
+                pygame.draw.rect(
+                    screen, SNAKE_BODY_COLOR, rect, border_radius=6
+                )
 
     pygame.display.flip()

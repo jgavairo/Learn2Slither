@@ -1,21 +1,24 @@
 import random
-import numpy as np
 import pickle
+import numpy as np
 
-class Agent :
-    q_table : dict[tuple[int, ...], list[float]]
-    actions : list[int] 
+
+class Agent:
+    q_table: dict[tuple[int, ...], list[float]]
+    actions: list[int]
 
     def __init__(self) -> None:
         self.q_table = {}
-        self.actions = [0, 1, 2, 3] # UP, DOWN, LEFT, RIGHT
+        self.actions = [0, 1, 2, 3]  # UP, DOWN, LEFT, RIGHT
 
         # Hyperparamètres
-        self.lr = 0.1        # Alpha : vitesse à laquelle l'IA remplace l'ancienne info
-        self.gamma = 0.9     # Gamma : importance accordée aux récompenses futures
+        # Alpha : vitesse à laquelle l'IA remplace l'ancienne info
+        self.lr = 0.1
+        # Gamma : importance accordée aux récompenses futures
+        self.gamma = 0.9
         self.epsilon = 1.0   # Taux d'exploration (100% au début)
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995 # Diminue le hasard à chaque partie
+        self.epsilon_decay = 0.995  # Diminue le hasard à chaque partie
 
     def get_q_values(self, state: str) -> list[float]:
         """
@@ -29,14 +32,11 @@ class Agent :
         """
         Choose an action based on epsilon-greedy strategy.
         """
-        # print (f"[AGENT] Choosing action for state:\n{state}\nEpsilon: {self.epsilon:.4f}")
         if random.random() < self.epsilon:
-            # print (f"[AGENT] Exploring: choosing random action")
             return random.choice(self.actions)
         else:
             q_values = self.get_q_values(state)
             return np.argmax(q_values)
-        
 
     def learn(self, old_state, action, reward, new_state, done):
         """
@@ -51,11 +51,12 @@ class Agent :
             # On demande à la Q-Table le meilleur score de l'état suivant
             next_q_values = self.get_q_values(new_state)
             max_future_q = max(next_q_values)
-        
+
         # 3. La formule magique (Bellman)
         # On calcule la nouvelle estimation : Reward actuel + 90% du futur
-        new_q_value = old_q_value + self.lr * (reward + self.gamma * max_future_q - old_q_value)
-        
+        bellman = reward + self.gamma * max_future_q - old_q_value
+        new_q_value = old_q_value + self.lr * bellman
+
         # 4. On enregistre cette nouvelle valeur dans notre mémoire
         self.q_table[old_state][action] = new_q_value
 
@@ -63,22 +64,19 @@ class Agent :
         if done:
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
-        
+
     def save_q_table(self, filename: str):
         """
         Function to save the q_table to a file
         """
-        with open (filename, 'wb') as f:
+        with open(filename, 'wb') as f:
             pickle.dump(self.q_table, f)
-        # print (f"[AGENT] Q-table saved to {filename}")
 
     def load_q_table(self, filename: str):
-        """ Function to load the q_table from a file """ 
+        """ Function to load the q_table from a file """
         try:
             with open(filename, 'rb') as f:
                 self.q_table = pickle.load(f)
             print(f"Q_table {filename} loaded!")
         except FileNotFoundError:
             print(f"{filename} not found. Starting with an empty Q-table.")
-            
-    

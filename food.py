@@ -27,7 +27,7 @@ class Food:
         Get the current position of the food.
         """
         return self._position
-    
+
     def get_color(self) -> str:
         """Get the color of the food."""
         return self._color
